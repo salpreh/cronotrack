@@ -10,6 +10,7 @@ class ChronoTimer():
     TIME_FMT = '%H:%M:%S'
 
     def __init__(self):
+        self.name = ''
         self.dt_start = None
         self.dt_end = None
         self.ts_start = []
@@ -18,6 +19,12 @@ class ChronoTimer():
         self._ts_current = 0
         self._last_ts_start = None
         self._stopped = False
+
+    def __eq__(self, other):
+        self_val = self._get_compare_val(self)
+        other_val = self._get_compare_val(other)
+
+        return self_val == other_val
 
     def start(self):
         if not self.dt_start:
@@ -63,6 +70,10 @@ class ChronoTimer():
     def is_stopped(self):
         return self._stopped
 
+    @property
+    def is_paused(self):
+        return len(self.ts_end) == len(self.ts_start)
+
     def _update_current_ts(self, ts_end=None, ts_start=None):
 
         if ts_start and not self._last_ts_start:
@@ -81,3 +92,16 @@ class ChronoTimer():
 
         if len(self.ts_end) < index + 1:
             self._ts_current += self.ts_end[index+1] - time.perf_counter()
+
+    def _get_compare_val(self, instance: 'ChronoTimer'):
+        val = ''
+        if instance._dt_start:
+            val += instance.get_str_dt_start
+
+        if instance._dt_end:
+            val += ' {}'.format(instance.get_str_dt_end)
+
+        if instance.name:
+            val += ' {}'.format(instance.name)
+
+        return val
