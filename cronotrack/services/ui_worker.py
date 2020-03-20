@@ -12,6 +12,7 @@ class UIWorker():
     _COLOR_BG_GREEN = 2
     _COLOR_BG_YELLOW = 3
     _COLOR_BG_RED = 4
+    _COLOR_BG_WHITE = 5
 
     def __init__(self, screen: curses.initscr()):
         self._screen = screen
@@ -26,23 +27,51 @@ class UIWorker():
         return ui_worker
 
     def write_chrono_line(self, chrono_timer: ChronoTimer, end_line=False):
-        self._screen.move(self._cursor_pos.y, self._cursor_pos.x)
+        # self._screen.move(self._cursor_pos.y, self._cursor_pos.x)
+        pos_x = self._cursor_pos.x
+        pos_y = self._cursor_pos.y
 
         eol = '\n' if end_line else ''
         chrono_style = self._get_crono_style(chrono_timer)
 
-        self._screen.addstr(' [{}] '.format(chrono_timer.get_str_dt_start()), curses.A_BOLD)
-        self._screen.addstr('{}'.format(chrono_timer.get_str_current_crono()),
-                            curses.color_pair(chrono_style))
+        output = ' [{}] '.format(chrono_timer.get_str_dt_start())
+        pos_x, _ = self._write_line(pos_y, pos_x, output, curses.A_BOLD)
+
+        output = '{}'.format(chrono_timer.get_str_current_crono())
+        pos_x, _ = self._write_line(pos_y, pos_x, output, curses.color_pair(chrono_style))
 
         if chrono_timer.name:
-            self._screen.addstr(' - {}'.format(chrono_timer.name))
+            output = ' - {}'.format(chrono_timer.name)
+            pos_x, _ = self._write_line(pos_y, pos_x, output)
 
-        self._screen.addstr('{}'.format(eol))
+        self._write_line(pos_y, pos_x, eol)
         self._screen.refresh()
 
-        if eol:
+        if end_line:
             self._cursor_pos.y += 1
+
+    def show_help_bar(self, pos_y=-1, pos_x=3):
+        if pos_y == -1:
+            max_y, max_x = self._screen.getmaxyx()
+            pos_y = max_y - 1
+
+        help_str = '|q: quit, p: pause, r: resume(if paused), n: new_chron'
+        output = '{}{}'.format(help_str, ' '*(max_x - len(help_str) - pos_x -1 ))
+        self._screen.addstr(pos_y, pos_x, output, curses.color_pair(self._COLOR_BG_WHITE))
+
+    def write_keystroke(self, key: str, pos_y=-1, pos_x=0):
+        if pos_y == -1:
+            pos_y, _ = self._screen.getmaxyx()
+
+        self._screen.addstr(pos_y-1, pos_x, ':{}'.format(key))
+
+    def _write_line(self, pos_y: int, pos_x: int, output: str, style=curses.A_NORMAL) -> (int, int):
+        self._screen.addstr(pos_y, pos_x, output, style)
+
+        new_x = pos_x + len(output)
+        new_y = pos_y + 1 if output.endswith('\n') else pos_y
+
+        return (new_x, new_y)
 
     def _init_colors(self):
         curses.start_color()
@@ -50,6 +79,7 @@ class UIWorker():
         curses.init_pair(self._COLOR_BG_GREEN, curses.COLOR_BLACK, curses.COLOR_GREEN)
         curses.init_pair(self._COLOR_BG_YELLOW, curses.COLOR_BLACK, curses.COLOR_YELLOW)
         curses.init_pair(self._COLOR_BG_RED, curses.COLOR_WHITE, curses.COLOR_RED)
+        curses.init_pair(self._COLOR_BG_WHITE, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     def _init_screen(self, screen):
         self._screen = screen

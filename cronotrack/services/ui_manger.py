@@ -19,6 +19,7 @@ class UIManager():
 
         self._render_stopped_chronos()
         self._render_current_chronos()
+        self._handle_keystrokes(screen)
 
     def _render_stopped_chronos(self):
         """
@@ -49,7 +50,74 @@ class UIManager():
         if not last_chrono.is_stopped:
             self._ui_worker.write_chrono_line(last_chrono)
 
-    def _init(self, screen):
+    def _handle_keystrokes(self, screen: curses.initscr()):
+        try:
+            key = screen.getkey()
+            self._ui_worker.write_keystroke(key)
+            
+            if key == 'q':
+                self._handle_quit()
+            elif key == 'p':
+                self._handle_pause()
+            elif key == 'r':
+                self._handle_resume()
+            elif key == 'n':
+                self._handle_new_chrono()
+
+        except curses.error:
+            pass
+
+    def _handle_pause(self):
+        if len(self.chrono_list) == 0:
+            return
+
+        last_chrono = self.chrono_list[-1]
+        if last_chrono.is_paused or last_chrono.is_stopped:
+            return
+
+        last_chrono.pause()
+
+    def _handle_stop(self):
+        if len(self.chrono_list) == 0:
+            return
+
+        last_chrono = self.chrono_list[-1]
+        if last_chrono.is_stopped:
+            return
+
+        last_chrono.stop()
+
+    def _handle_resume(self):
+        if len(self.chrono_list) == 0:
+            return
+
+        last_chrono = self.chrono_list[-1]
+        if not last_chrono.is_paused or last_chrono.is_stopped:
+            return
+
+        last_chrono.start()
+
+    def _handle_new_chrono(self):
+        if len(self.chrono_list) > 0:
+            last_chrono = self.chrono_list[-1]
+            if not last_chrono.is_stopped:
+                last_chrono.stop()
+
+        # TODO: Add name to chrono
+        new_chrono = ChronoTimer()
+        new_chrono.start()
+        self.chrono_list.append(new_chrono)
+
+    def _handle_quit(self):
+        # TODO: To review, temp solution
+        raise KeyboardInterrupt('Stopped')
+
+    def _init(self, screen: curses.initscr()):
         if not self._is_init:
-            self._ui_worker = UIWorker(screen)
             curses.curs_set(0)
+            curses.noecho()
+            screen.nodelay(1)
+
+            self._ui_worker = UIWorker(screen)
+            self._ui_worker.show_help_bar()
+            self._is_init = True
