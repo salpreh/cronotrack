@@ -100,10 +100,15 @@ class UIManager():
     def _handle_new_chrono(self):
         if len(self.chrono_list) > 0:
             last_chrono = self.chrono_list[-1]
+
+            # Add name to previous crono
+            name_input = self._ui_worker.show_text_input()
+            last_chrono.name = name_input
+
+            # Stop if necessary
             if not last_chrono.is_stopped:
                 last_chrono.stop()
 
-        # TODO: Add name to chrono
         new_chrono = ChronoTimer()
         new_chrono.start()
         self.chrono_list.append(new_chrono)
