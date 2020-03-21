@@ -17,9 +17,14 @@ class UIManager():
     def run(self, screen):
         self._init(screen)
 
-        self._render_stopped_chronos()
-        self._render_current_chronos()
-        self._handle_keystrokes(screen)
+        try:
+            while True:
+                self._render_stopped_chronos()
+                self._render_current_chronos()
+                self._ui_worker.show_help_bar()
+                self._handle_keystrokes(screen)
+        except KeyboardInterrupt:
+            pass
 
     def _render_stopped_chronos(self):
         """
@@ -53,14 +58,12 @@ class UIManager():
     def _handle_keystrokes(self, screen: curses.initscr()):
         try:
             key = screen.getkey()
-            self._ui_worker.write_keystroke(key)
+            self._ui_worker.write_keystroke(key+' ')
             
             if key == 'q':
                 self._handle_quit()
             elif key == 'p':
                 self._handle_pause()
-            elif key == 'r':
-                self._handle_resume()
             elif key == 'n':
                 self._handle_new_chrono()
 
@@ -72,10 +75,13 @@ class UIManager():
             return
 
         last_chrono = self.chrono_list[-1]
-        if last_chrono.is_paused or last_chrono.is_stopped:
+        if last_chrono.is_stopped:
             return
 
-        last_chrono.pause()
+        if last_chrono.is_paused:
+            last_chrono.start()
+        else:
+            last_chrono.pause()
 
     def _handle_stop(self):
         if len(self.chrono_list) == 0:
@@ -85,36 +91,21 @@ class UIManager():
         if last_chrono.is_stopped:
             return
 
+        # Add name to previous crono
+        name_input = self._ui_worker.show_text_input(placeholder="Name: ")
+        last_chrono.name = name_input
+
         last_chrono.stop()
 
-    def _handle_resume(self):
-        if len(self.chrono_list) == 0:
-            return
-
-        last_chrono = self.chrono_list[-1]
-        if not last_chrono.is_paused or last_chrono.is_stopped:
-            return
-
-        last_chrono.start()
-
     def _handle_new_chrono(self):
-        if len(self.chrono_list) > 0:
-            last_chrono = self.chrono_list[-1]
-
-            # Add name to previous crono
-            name_input = self._ui_worker.show_text_input()
-            last_chrono.name = name_input
-
-            # Stop if necessary
-            if not last_chrono.is_stopped:
-                last_chrono.stop()
+        self._handle_stop()
 
         new_chrono = ChronoTimer()
         new_chrono.start()
         self.chrono_list.append(new_chrono)
 
     def _handle_quit(self):
-        # TODO: To review, temp solution
+        self._handle_stop()
         raise KeyboardInterrupt('Stopped')
 
     def _init(self, screen: curses.initscr()):
@@ -124,5 +115,4 @@ class UIManager():
             screen.nodelay(1)
 
             self._ui_worker = UIWorker(screen)
-            self._ui_worker.show_help_bar()
             self._is_init = True

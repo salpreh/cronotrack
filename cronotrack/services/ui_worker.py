@@ -38,11 +38,11 @@ class UIWorker():
         pos_x, _ = self._write_line(pos_y, pos_x, output, curses.A_BOLD)
 
         output = '{}'.format(chrono_timer.get_str_current_crono())
-        pos_x, _ = self._write_line(pos_y, pos_x, output, curses.color_pair(chrono_style))
+        pos_x, _ = self._write_line(pos_y, pos_x, output, chrono_style)
 
         if chrono_timer.name:
             output = ' - {}'.format(chrono_timer.name)
-            pos_x, _ = self._write_line(pos_y, pos_x, output)
+            pos_x, _ = self._write_line_with_limit(pos_y, pos_x, output)
 
         self._write_line(pos_y, pos_x, eol)
         self._screen.refresh()
@@ -55,8 +55,8 @@ class UIWorker():
             max_y, max_x = self._screen.getmaxyx()
             pos_y = max_y - 1
 
-        help_str = '|q: quit, p: pause, r: resume(if paused), n: new_chron'
-        output = '{}{}'.format(help_str, ' '*(max_x - len(help_str) - pos_x -1 ))
+        help_str = '|q: quit, p: pause/resume, n: new_chron'
+        output = '{}{}'.format(help_str, ' '*(max_x - len(help_str) - pos_x - 1))
         self._screen.addstr(pos_y, pos_x, output, curses.color_pair(self._COLOR_BG_WHITE))
 
         self._screen.refresh()
@@ -76,7 +76,22 @@ class UIWorker():
 
         return (new_x, new_y)
 
-    def show_text_input(self, pos_y=-1, pos_x=1, add_frame=True) -> str:
+    def _write_line_with_limit(self, pos_y: int, pos_x: int, output: str, limit=-1, style=curses.A_NORMAL) -> (int, int):
+        """
+        Write a string until a limit is reached. If limit is -1 (default) the limit woluld be the current line
+        """
+        if limit == -1:
+            _, max_x = self._screen.getmaxyx()
+            limit = max_x - pos_x - 1
+
+        self._screen.addnstr(pos_y, pos_x, output, limit, style)
+
+        new_x = pos_x + min(len(output), limit)
+        new_y = pos_y + 1 if output.endswith('\n') else pos_y
+
+        return (new_x, new_y)
+
+    def show_text_input(self, pos_y=-1, pos_x=1, add_frame=True, placeholder="") -> str:
         max_y, max_x = self._screen.getmaxyx()
         if pos_y == -1:
             pos_y = max_y - 3
@@ -86,7 +101,11 @@ class UIWorker():
                                      pos_y - 1, 0,
                                      pos_y + 1, max_x - 1)
 
-        txt_win = curses.newwin(1, max_x, pos_y, pos_x)
+        self._screen.addstr(pos_y, pos_x, placeholder)
+
+        txt_win = curses.newwin(1, max_x - len(placeholder),
+                                pos_y, pos_x + len(placeholder))
+
         txt_box = curses.textpad.Textbox(txt_win)
         curses.curs_set(1)
         self._screen.refresh()
@@ -114,12 +133,12 @@ class UIWorker():
         self._screen = screen
 
     def _get_crono_style(self, chrono_timer: ChronoTimer):
-        style = self._COLOR_BG_CYAN
+        style = curses.color_pair(self._COLOR_BG_CYAN)
         if chrono_timer.is_stopped:
-            style = self._COLOR_BG_GREEN
+            style = curses.color_pair(self._COLOR_BG_GREEN)
         elif chrono_timer.is_paused:
-            style = self._COLOR_BG_RED
-            
+            style = curses.color_pair(self._COLOR_BG_RED) | curses.A_BLINK
+
         return style
 
 
