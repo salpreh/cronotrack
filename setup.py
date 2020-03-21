@@ -25,7 +25,7 @@ setup(
     long_description_content_type='text/markdown',
     author='salpreh',
     author_email='salva.perez46@gmail.com',
-    url='https://github.com/salpreh/tablat',
-    license='MIT License',
+    url='https://github.com/salpreh/cronotrack',
+    license='GPL-3.0',
     packages=find_packages(exclude=('test', 'assets', 'dev_test', 'doc'))
 )
