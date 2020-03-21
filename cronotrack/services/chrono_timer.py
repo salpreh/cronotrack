@@ -58,9 +58,15 @@ class ChronoTimer():
         return self._ts_current
 
     def get_str_dt_start(self):
+        if not self.dt_start:
+            return ''
+
         return datetime.strftime(self.dt_start, ChronoTimer.DATETIME_FMT)
 
     def get_str_dt_end(self):
+        if not self.dt_end:
+            return ''
+
         return datetime.strftime(self.dt_end, ChronoTimer.DATETIME_FMT)
 
     def get_str_current_crono(self):
