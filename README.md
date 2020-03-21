@@ -1,5 +1,8 @@
 # CLI App for tracking time
+[![PyPI version](https://badge.fury.io/py/cronotrack.svg)](https://badge.fury.io/py/cronotrack)
+[![PyPI version](https://img.shields.io/github/license/salpreh/cronotrack.svg)](https://img.shields.io/github/license/salpreh/cronotrack.svg)
 
+---
 Basic CLI application for tracking time writen in python (stdlib only)
 
 ### Installation and usage
