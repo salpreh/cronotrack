@@ -2,3 +2,8 @@
 
 .vscode/
 dev_test/
+setup/
+
+build/
+*.egg-info/
+dist/
